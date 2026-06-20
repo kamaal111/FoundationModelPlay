@@ -1,0 +1,25 @@
+FoundationModelPlay/Models/LocationLookup.swift
+  s_24115e317119c4::t_2da5477614fa82 11-57
+FoundationModelPlay/Views/Itinerary/LandmarkDescriptionView.swift
+  s_24115e317119c4::t_ba8ecc1937e18e 49
+FoundationModelPlay/Views/Itinerary/ItineraryView.swift
+  s_24115e317119c4::t_ba8ecc1937e18e 64-65
+FoundationModelPlay/Views/Itinerary/Effects.swift
+  s_24115e317119c4::t_6e047a0aac2973 13-14,17,19-20,23,25-26,35-36,39-40,47-48,51,53-54,60-61,64-65,69-70,72-113,117,121,125,129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "ad0ea9376299ceea0b465d7ad9cba1d232db1cab",
+  "prompts": {},
+  "sessions": {
+    "s_24115e317119c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ee4e1-bc59-77b2-91bc-4d24f98e80c1",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Kamaal Farah <kamaal.f1@gmail.com>"
+    }
+  }
+}
