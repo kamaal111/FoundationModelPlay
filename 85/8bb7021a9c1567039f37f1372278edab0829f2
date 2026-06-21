@@ -1,0 +1,27 @@
+FoundationModelPlay/Views/Itinerary/LandmarkDescriptionView.swift
+  s_a96e598d7e1a37::t_cbc165051c30d7 49
+FoundationModelPlay/Models/Itenerary/ItineraryPlanner.swift
+  s_a96e598d7e1a37::t_dc53c257bee2e0 16,69-70,75-78,84,92,111-134
+  s_a96e598d7e1a37::t_345f526338041a 37,44-68,98-109
+FoundationModelPlay/Models/Itenerary/FindPointsOfInterestTool.swift
+  s_a96e598d7e1a37::t_cc68aa2c8ecf2b 40-51,56,65,68,78,90-133,135-142,144
+  s_a96e598d7e1a37::t_dc53c257bee2e0 61-64,66-67,69-72,75-77,79-81
+FoundationModelPlay/Views/Itinerary/LandmarkTripView.swift
+  s_a96e598d7e1a37::t_dc53c257bee2e0 17-18,29-31,45-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "858bb7021a9c1567039f37f1372278edab0829f2",
+  "prompts": {},
+  "sessions": {
+    "s_a96e598d7e1a37": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eea38-cb59-7431-8f82-111177a8754a",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
