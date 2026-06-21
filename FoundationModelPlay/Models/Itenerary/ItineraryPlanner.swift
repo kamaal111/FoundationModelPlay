@@ -17,19 +17,21 @@ final class ItineraryPlanner {
 
     let landmark: Landmark
 
-    private let session: LanguageModelSession
+    private let researchSession: LanguageModelSession
+    private let itinerarySession: LanguageModelSession
 
     init(landmark: Landmark) {
         self.landmark = landmark
-        self.session = Self.createSession(landmark: landmark)
+        self.researchSession = Self.createResearchSession(landmark: landmark)
+        self.itinerarySession = Self.createItinerarySession(landmark: landmark)
     }
 
     func suggestItinerary(dayCount: Int) async {
-        let pointOfInterestSummary = await pointOfInterestSummary()
+        let pointOfInterestSummary = await researchPointOfInterestSummary()
         let response: LanguageModelSession.Response<Itinerary>
 
         do {
-            response = try await session.respond(generating: Itinerary.self) {
+            response = try await itinerarySession.respond(generating: Itinerary.self) {
                 """
                 Generate a complete \(dayCount)-day itinerary to \(landmark.name).
 
@@ -52,11 +54,31 @@ final class ItineraryPlanner {
             }
         } catch {
             print("🐸🐸🐸", error)
-            await suggestItineraryWithoutTools(dayCount: dayCount, underlyingError: error)
+            self.error = error
+            self.errorMessage = Self.message(for: error)
             return
         }
 
         itinerary = response.content
+    }
+
+    private func researchPointOfInterestSummary() async -> String {
+        do {
+            let response = try await researchSession.respond {
+                """
+                Research useful points of interest for a \(landmark.name) itinerary.
+
+                Use the findPointsOfInterest tool for restaurant, hotel, campground, \
+                museum, and nationalMonument. Summarize the useful findings in plain \
+                English. If a category has no results, say that directly. Do not create \
+                the itinerary.
+                """
+            }
+
+            return response.content
+        } catch {
+            return await pointOfInterestSummary()
+        }
     }
 
     private func pointOfInterestSummary() async -> String {
@@ -79,34 +101,19 @@ final class ItineraryPlanner {
         return results.joined(separator: "\n")
     }
 
-    private func suggestItineraryWithoutTools(dayCount: Int, underlyingError: Error) async {
-        let fallbackSession = Self.createFallbackSession(landmark: landmark)
+    private static func createResearchSession(landmark: Landmark) -> LanguageModelSession {
+        let pointOfInterestTool = FindPointsOfInterestTool(landmark: landmark)
 
-        do {
-            let response = try await fallbackSession.respond(generating: Itinerary.self) {
-                """
-                Generate a complete \(dayCount)-day itinerary to \(landmark.name).
-
-                You must fill every required property:
-                - title
-                - destinationName
-                - description
-                - rationale
-                - exactly \(dayCount) days
-                - exactly 3 activities per day
-
-                Use \(landmark.name) as destinationName.
-                """
-            }
-
-            itinerary = response.content
-        } catch {
-            self.error = error
-            self.errorMessage = Self.message(for: underlyingError)
+        return LanguageModelSession(tools: [pointOfInterestTool]) {
+            """
+            Your job is to research travel context for \(landmark.name). Use tools when \
+            useful, then answer only in concise plain English. Do not generate structured \
+            itinerary data.
+            """
         }
     }
 
-    private static func createSession(landmark: Landmark) -> LanguageModelSession {
+    private static func createItinerarySession(landmark: Landmark) -> LanguageModelSession {
         LanguageModelSession {
             """
             Your job is to create an itinerary for the user. Return a complete \
@@ -121,20 +128,6 @@ final class ItineraryPlanner {
 
             "Here is an example:"
             Itinerary.exampleTripToJapan
-        }
-    }
-
-    private static func createFallbackSession(landmark: Landmark) -> LanguageModelSession {
-        LanguageModelSession {
-            """
-            Your job is to create a travel itinerary. Do not use tools. Return a complete \
-            itinerary with all required fields populated.
-            """
-
-            """
-            Destination: \(landmark.name)
-            Summary: \(landmark.promptDescription)
-            """
         }
     }
 
@@ -156,7 +149,6 @@ final class ItineraryPlanner {
 private extension Landmark {
     var promptDescription: String {
         let maxCharacters = 1_200
-
         guard description.count > maxCharacters else { return description }
 
         return shortDescription + "\n\n" + description.prefix(maxCharacters)
