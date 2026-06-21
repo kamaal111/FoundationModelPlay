@@ -1,0 +1,24 @@
+FoundationModelPlay/Views/Itinerary/LandmarkTripView.swift
+  s_a96e598d7e1a37::t_dc53c257bee2e0 17-18,29-31,45-74
+FoundationModelPlay/Models/Itenerary/FindPointsOfInterestTool.swift
+  s_a96e598d7e1a37::t_dc53c257bee2e0 52-63,66-72
+FoundationModelPlay/Models/Itenerary/ItineraryPlanner.swift
+  s_a96e598d7e1a37::t_dc53c257bee2e0 16,67,75,82,90,109-132
+  s_a96e598d7e1a37::t_345f526338041a 35,42-66,96-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "7254a26ae06f85bb15bd5ae2570d5349407d257e",
+  "prompts": {},
+  "sessions": {
+    "s_a96e598d7e1a37": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eea38-cb59-7431-8f82-111177a8754a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Kamaal Farah <kamaal.f1@gmail.com>"
+    }
+  }
+}
