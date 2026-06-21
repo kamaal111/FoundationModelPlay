@@ -25,12 +25,30 @@ final class ItineraryPlanner {
     }
 
     func suggestItinerary(dayCount: Int) async {
+        let pointOfInterestSummary = await pointOfInterestSummary()
         let response: LanguageModelSession.Response<Itinerary>
+
         do {
             response = try await session.respond(generating: Itinerary.self) {
-                "Generate a \(dayCount)-day itinerary to \(landmark.name)."
-                "You must fill every required property"
-                "Give it a fun title and description."
+                """
+                Generate a complete \(dayCount)-day itinerary to \(landmark.name).
+
+                You must fill every required property:
+                - title
+                - destinationName
+                - description
+                - rationale
+                - exactly \(dayCount) days
+                - exactly 3 activities per day
+
+                Use \(landmark.name) as destinationName.
+                Give it a fun title and description.
+                """
+
+                """
+                Use these point-of-interest search results when they are relevant:
+                \(pointOfInterestSummary)
+                """
             }
         } catch {
             print("🐸🐸🐸", error)
@@ -39,6 +57,26 @@ final class ItineraryPlanner {
         }
 
         itinerary = response.content
+    }
+
+    private func pointOfInterestSummary() async -> String {
+        let tool = FindPointsOfInterestTool(landmark: landmark)
+        let categories: [FindPointsOfInterestTool.Category] = [
+            .restaurant,
+            .hotel,
+            .campground,
+            .museum,
+            .nationalMonument
+        ]
+
+        var results: [String] = []
+        for category in categories {
+            let result = (try? await tool.call(arguments: .init(pointOfInterest: category)))
+                ?? "No \(category.rawValue) results were available for \(landmark.name)."
+            results.append(result)
+        }
+
+        return results.joined(separator: "\n")
     }
 
     private func suggestItineraryWithoutTools(dayCount: Int, underlyingError: Error) async {
@@ -69,20 +107,10 @@ final class ItineraryPlanner {
     }
 
     private static func createSession(landmark: Landmark) -> LanguageModelSession {
-        let pointOfInterestTool = FindPointsOfInterestTool(landmark: landmark)
-
-        return LanguageModelSession(tools: [pointOfInterestTool]) {
+        LanguageModelSession {
             """
             Your job is to create an itinerary for the user. Return a complete \
-            itinerary with all required fields populated.
-            """
-
-            """
-            Use the \(pointOfInterestTool.name) tool to find various \
-            businesses and activities in \(landmark.name).
-
-            These point of interest categories may include \
-            \(FindPointsOfInterestTool.formattedCategories)
+            itinerary with all required fields populated. Do not leave any required field empty.
             """
 
             """

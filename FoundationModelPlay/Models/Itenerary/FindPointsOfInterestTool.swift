@@ -58,18 +58,7 @@ struct FindPointsOfInterestTool: Tool {
     }
 
     func call(arguments: Arguments) async throws -> String {
-        let items: [MKMapItem]
-        do {
-            items = try await pointsOfInterest(nearby: landmark.locationCoordinate, arguments: arguments)
-        } catch {
-            print("MapKit point-of-interest search failed:", error)
-            return """
-            MapKit could not find \(arguments.pointOfInterest.rawValue) results for \
-            \(landmark.name). Continue planning \
-            with well-known places and general travel knowledge for this landmark.
-            """
-        }
-
+        let items = await pointsOfInterest(nearby: landmark.locationCoordinate, arguments: arguments)
         let results = items.prefix(10).compactMap(\.name)
 
         guard !results.isEmpty else {
@@ -86,22 +75,24 @@ struct FindPointsOfInterestTool: Tool {
     private func pointsOfInterest(
         nearby location: CLLocationCoordinate2D,
         arguments: Arguments
-    ) async throws -> [MKMapItem] {
-        var lastError: Error?
-
+    ) async -> [MKMapItem] {
         for request in requests(nearby: location, category: arguments.pointOfInterest) {
             do {
-                let items = try await MKLocalSearch(request: request).start().mapItems
+                let items = try await MKLocalSearch(request: request).start()
+                    .mapItems
+                    .filter { item in
+                        let itemLocation = item.location
+                        let distance = itemLocation
+                            .distance(from: CLLocation(latitude: location.latitude, longitude: location.longitude))
+
+                        return distance <= 1_500_000
+                    }
                 if !items.isEmpty {
                     return items
                 }
             } catch {
-                lastError = error
+                continue
             }
-        }
-
-        if let lastError {
-            throw lastError
         }
 
         return []
@@ -118,7 +109,7 @@ struct FindPointsOfInterestTool: Tool {
             800_000
         ]
 
-        var requests = regionalDistances.map { distance in
+        let requests = regionalDistances.map { distance in
             let request = MKLocalSearch.Request()
             request.naturalLanguageQuery = category.searchQuery
             request.resultTypes = .pointOfInterest
@@ -130,16 +121,6 @@ struct FindPointsOfInterestTool: Tool {
             )
             return request
         }
-
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = "\(category.searchQuery) near \(landmark.name)"
-        request.resultTypes = .pointOfInterest
-        request.region = MKCoordinateRegion(
-            center: location,
-            latitudinalMeters: 1_500_000,
-            longitudinalMeters: 1_500_000
-        )
-        requests.append(request)
 
         return requests
     }
