@@ -1,0 +1,19 @@
+README.md
+  s_a96e598d7e1a37::t_b93812b639f4d6 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "18e06bbcac2b706ddb1462d77bda9600d522f2a0",
+  "prompts": {},
+  "sessions": {
+    "s_a96e598d7e1a37": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eea38-cb59-7431-8f82-111177a8754a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Kamaal Farah <kamaal.f1@gmail.com>"
+    }
+  }
+}
