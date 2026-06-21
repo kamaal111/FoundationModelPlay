@@ -1,0 +1,24 @@
+FoundationModelPlay/Models/Itenerary/FindPointsOfInterestTool.swift
+  s_a96e598d7e1a37::t_a851b01aca5de2 61,78
+  s_a96e598d7e1a37::t_a3a29588c9b2ef 83
+  s_a96e598d7e1a37::t_4d881a511dff7a 82,84-85
+FoundationModelPlay/Models/Itenerary/ItineraryPlanner.swift
+  s_a96e598d7e1a37::t_d7e36bc4aeb0e6 28,30,33-51,62-73,77-81,110,113
+  s_a96e598d7e1a37::t_622a52eba56459 74-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "d1c25e87ed2033f433100ede14750cc9c4c1c52f",
+  "prompts": {},
+  "sessions": {
+    "s_a96e598d7e1a37": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eea38-cb59-7431-8f82-111177a8754a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Kamaal Farah <kamaal.f1@gmail.com>"
+    }
+  }
+}
