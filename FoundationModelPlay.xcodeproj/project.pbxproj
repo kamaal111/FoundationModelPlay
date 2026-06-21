@@ -8,6 +8,7 @@
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* FoundationModelPlay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FoundationModelPlay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CC6E7D92FE8316E0039C025 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -43,6 +44,7 @@
 		000000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				2CC6E7D92FE8316E0039C025 /* README.md */,
 				000000000000000000000010 /* FoundationModelPlay */,
 				000000000000000000000020 /* Products */,
 			);
