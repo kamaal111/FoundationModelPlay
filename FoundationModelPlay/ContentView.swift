@@ -10,7 +10,7 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        LandmarkTripView(landmark: Landmarks.first)
+        LandmarkTripView(landmark: Landmarks.fuji)
     }
 }
 

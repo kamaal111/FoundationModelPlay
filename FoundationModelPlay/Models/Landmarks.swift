@@ -11,6 +11,7 @@ enum Landmarks {
     nonisolated static var landmarkNames: [String] { landmarks.map(\.name) }
     nonisolated static var first: Landmark { landmarks.first! }
     nonisolated static let landmarks: [Landmark] = parseLandmarks(fileName: "landmarkData.json")
+    nonisolated static var fuji: Landmark { landmarks[14] }
 
     private static func parseLandmarks(fileName: String) -> [Landmark] {
         guard let file = Bundle.main.url(forResource: fileName, withExtension: nil) else {
