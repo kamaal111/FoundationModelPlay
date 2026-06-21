@@ -5,6 +5,7 @@
 //  Created by Kamaal M Farah on 6/20/26.
 //
 
+import Foundation
 import Observation
 import FoundationModels
 
@@ -12,6 +13,7 @@ import FoundationModels
 final class ItineraryPlanner {
     private(set) var itinerary: Itinerary?
     private(set) var error: Error?
+    private(set) var errorMessage: String?
 
     let landmark: Landmark
 
@@ -27,27 +29,59 @@ final class ItineraryPlanner {
         do {
             response = try await session.respond(generating: Itinerary.self) {
                 "Generate a \(dayCount)-day itinerary to \(landmark.name)."
+                "You must fill every required property"
                 "Give it a fun title and description."
             }
         } catch {
-            self.error = error
+            print("🐸🐸🐸", error)
+            await suggestItineraryWithoutTools(dayCount: dayCount, underlyingError: error)
             return
         }
 
         itinerary = response.content
     }
 
+    private func suggestItineraryWithoutTools(dayCount: Int, underlyingError: Error) async {
+        let fallbackSession = Self.createFallbackSession(landmark: landmark)
+
+        do {
+            let response = try await fallbackSession.respond(generating: Itinerary.self) {
+                """
+                Generate a complete \(dayCount)-day itinerary to \(landmark.name).
+
+                You must fill every required property:
+                - title
+                - destinationName
+                - description
+                - rationale
+                - exactly \(dayCount) days
+                - exactly 3 activities per day
+
+                Use \(landmark.name) as destinationName.
+                """
+            }
+
+            itinerary = response.content
+        } catch {
+            self.error = error
+            self.errorMessage = Self.message(for: underlyingError)
+        }
+    }
+
     private static func createSession(landmark: Landmark) -> LanguageModelSession {
         let pointOfInterestTool = FindPointsOfInterestTool(landmark: landmark)
 
         return LanguageModelSession(tools: [pointOfInterestTool]) {
-            "Your job is to create an itinerary for the user."
+            """
+            Your job is to create an itinerary for the user. Return a complete \
+            itinerary with all required fields populated.
+            """
 
             """
             Use the \(pointOfInterestTool.name) tool to find various \
             businesses and activities in \(landmark.name).
 
-            These point of interest categories mayb include \
+            These point of interest categories may include \
             \(FindPointsOfInterestTool.formattedCategories)
             """
 
@@ -55,11 +89,49 @@ final class ItineraryPlanner {
             Here is the description of \(landmark.name) for your reference \
             when considering what activities to generate:
             """
-            landmark.description
+            landmark.promptDescription
 
             "Here is an example:"
             Itinerary.exampleTripToJapan
         }
+    }
+
+    private static func createFallbackSession(landmark: Landmark) -> LanguageModelSession {
+        LanguageModelSession {
+            """
+            Your job is to create a travel itinerary. Do not use tools. Return a complete \
+            itinerary with all required fields populated.
+            """
+
+            """
+            Destination: \(landmark.name)
+            Summary: \(landmark.promptDescription)
+            """
+        }
+    }
+
+    private static func message(for error: Error) -> String {
+        if error.localizedDescription.contains("maximum allowed context size") {
+            return """
+            The itinerary prompt was too large for the local model. Try again with a shorter \
+            landmark description or fewer requested details.
+            """
+        }
+
+        return """
+        I couldn't generate an itinerary for this landmark. The local model or MapKit lookup \
+        failed while planning. Please try again.
+        """
+    }
+}
+
+private extension Landmark {
+    var promptDescription: String {
+        let maxCharacters = 1_200
+
+        guard description.count > maxCharacters else { return description }
+
+        return shortDescription + "\n\n" + description.prefix(maxCharacters)
     }
 }
 

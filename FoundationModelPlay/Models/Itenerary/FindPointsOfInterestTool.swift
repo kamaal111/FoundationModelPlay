@@ -37,20 +37,48 @@ struct FindPointsOfInterestTool: Tool {
             case .nationalMonument: .nationalMonument
             }
         }
+
+        var searchQuery: String {
+            switch self {
+            case .restaurant: "restaurant"
+            case .campground: "campground"
+            case .hotel: "hotel"
+            case .cafe: "cafe"
+            case .museum: "museum"
+            case .marina: "marina"
+            case .nationalMonument: "national monument"
+            }
+        }
     }
 
     @Generable
     struct Arguments {
-        @Guide(description: "This is the type of destination to look for.")
+        @Guide(description: "The type of destination to look for.")
         let pointOfInterest: Category
-
-        @Guide(description: "The natural language query of what to search for.")
-        let naturalLanguageQuery: String
     }
 
     func call(arguments: Arguments) async throws -> String {
-        let items = try await pointsOfInterest(nearby: landmark.locationCoordinate, arguments: arguments)
+        let items: [MKMapItem]
+        do {
+            items = try await pointsOfInterest(nearby: landmark.locationCoordinate, arguments: arguments)
+        } catch {
+            print("MapKit point-of-interest search failed:", error)
+            return """
+            MapKit could not find \(arguments.pointOfInterest.rawValue) results for \
+            \(landmark.name). Continue planning \
+            with well-known places and general travel knowledge for this landmark.
+            """
+        }
+
         let results = items.prefix(10).compactMap(\.name)
+
+        guard !results.isEmpty else {
+            return """
+            MapKit found no \(arguments.pointOfInterest.rawValue) results for \
+            \(landmark.name). Continue planning \
+            with well-known places and general travel knowledge for this landmark.
+            """
+        }
 
         return "There are these \(arguments.pointOfInterest) in \(landmark.name): \(results.formatted())"
     }
@@ -59,13 +87,60 @@ struct FindPointsOfInterestTool: Tool {
         nearby location: CLLocationCoordinate2D,
         arguments: Arguments
     ) async throws -> [MKMapItem] {
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = arguments.naturalLanguageQuery
-        request.pointOfInterestFilter = .init(including: [arguments.pointOfInterest.toMapKitCategory])
-        let distance: CLLocationDistance = 20_000
-        request.region = MKCoordinateRegion(center: location, latitudinalMeters: distance, longitudinalMeters: distance)
-        let search = MKLocalSearch(request: request)
+        var lastError: Error?
 
-        return try await search.start().mapItems
+        for request in requests(nearby: location, category: arguments.pointOfInterest) {
+            do {
+                let items = try await MKLocalSearch(request: request).start().mapItems
+                if !items.isEmpty {
+                    return items
+                }
+            } catch {
+                lastError = error
+            }
+        }
+
+        if let lastError {
+            throw lastError
+        }
+
+        return []
+    }
+
+    private func requests(
+        nearby location: CLLocationCoordinate2D,
+        category: Category
+    ) -> [MKLocalSearch.Request] {
+        let regionalDistances: [CLLocationDistance] = [
+            20_000,
+            100_000,
+            300_000,
+            800_000
+        ]
+
+        var requests = regionalDistances.map { distance in
+            let request = MKLocalSearch.Request()
+            request.naturalLanguageQuery = category.searchQuery
+            request.resultTypes = .pointOfInterest
+            request.pointOfInterestFilter = .init(including: [category.toMapKitCategory])
+            request.region = MKCoordinateRegion(
+                center: location,
+                latitudinalMeters: distance,
+                longitudinalMeters: distance
+            )
+            return request
+        }
+
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = "\(category.searchQuery) near \(landmark.name)"
+        request.resultTypes = .pointOfInterest
+        request.region = MKCoordinateRegion(
+            center: location,
+            latitudinalMeters: 1_500_000,
+            longitudinalMeters: 1_500_000
+        )
+        requests.append(request)
+
+        return requests
     }
 }

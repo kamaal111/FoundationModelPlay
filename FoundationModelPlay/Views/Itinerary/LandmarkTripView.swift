@@ -14,8 +14,8 @@ struct LandmarkTripView: View {
     let landmark: Landmark
 
     var body: some View {
-        if let error = planner?.error {
-            MessageView(error: error, landmark: landmark)
+        if let errorMessage = planner?.errorMessage {
+            MessageView(landmark: landmark, message: errorMessage)
         } else {
             ScrollView {
                 if !requestedItinerary {
@@ -26,6 +26,9 @@ struct LandmarkTripView: View {
                 }
             }
             .headerStyle(landmark: landmark)
+            .safeAreaInset(edge: .bottom) {
+                ItineraryButton { await requestItinerary() }
+            }
             .scrollDisabled(!requestedItinerary)
             .task {
                 planner = ItineraryPlanner(landmark: landmark)
@@ -36,6 +39,38 @@ struct LandmarkTripView: View {
     func requestItinerary() async {
         requestedItinerary = true
         await planner?.suggestItinerary(dayCount: 3)
+    }
+}
+
+private struct ItineraryButton: View {
+    @State private var showButton: Bool = false
+
+    let closure: () async -> Void
+
+    var body: some View {
+        VStack {
+            Button(action: handlePress) {
+                Label("Generate Itinerary", systemImage: "sparkles")
+                    .fontWeight(.bold)
+                    .padding()
+            }
+            .buttonStyle(.bordered)
+            .padding()
+            .opacity(showButton ? 1 : 0)
+            .animation(.easeInOut(duration: 0.5), value: showButton)
+            .onAppear(perform: handleOnAppear)
+            .transition(.opacity)
+        }
+        .frame(maxWidth: .infinity, alignment: .bottom)
+    }
+
+    private func handlePress() {
+        showButton = false
+        Task { @MainActor in await closure() }
+    }
+
+    private func handleOnAppear() {
+        showButton = true
     }
 }
 

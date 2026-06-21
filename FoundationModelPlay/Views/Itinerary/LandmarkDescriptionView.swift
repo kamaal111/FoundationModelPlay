@@ -46,7 +46,7 @@ struct LandmarkDescriptionView: View {
             let stream = session.streamResponse(
                 to: landmark.description,
                 generating: TaggingResponse.self,
-                options: GenerationOptions(samplingMode: .greedy)
+                options: GenerationOptions(sampling: .greedy)
             )
 
             do {
