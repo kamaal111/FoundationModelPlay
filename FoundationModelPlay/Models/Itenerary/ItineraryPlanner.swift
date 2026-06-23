@@ -27,9 +27,15 @@ final class ItineraryPlanner {
     }
 
     func suggestItinerary(dayCount: Int) async {
-        let pointOfInterestSummary = await researchPointOfInterestSummary()
-        let response: LanguageModelSession.Response<Itinerary>
+        let pointOfInterestSummary: String
+        do {
+            pointOfInterestSummary = try await researchPointOfInterestSummary()
+        } catch {
+            setError(error)
+            return
+        }
 
+        let response: LanguageModelSession.Response<Itinerary>
         do {
             response = try await itinerarySession.respond(generating: Itinerary.self) {
                 """
@@ -53,52 +59,31 @@ final class ItineraryPlanner {
                 """
             }
         } catch {
-            print("🐸🐸🐸", error)
-            self.error = error
-            self.errorMessage = Self.message(for: error)
+            setError(error)
             return
         }
 
         itinerary = response.content
     }
 
-    private func researchPointOfInterestSummary() async -> String {
-        do {
-            let response = try await researchSession.respond {
-                """
-                Research useful points of interest for a \(landmark.name) itinerary.
+    private func researchPointOfInterestSummary() async throws -> String {
+        let response = try await researchSession.respond {
+            """
+            Research useful points of interest for a \(landmark.name) itinerary.
 
-                Use the findPointsOfInterest tool for restaurant, hotel, campground, \
-                museum, and nationalMonument. Summarize the useful findings in plain \
-                English. If a category has no results, say that directly. Do not create \
-                the itinerary.
-                """
-            }
-
-            return response.content
-        } catch {
-            return await pointOfInterestSummary()
+            Use the findPointsOfInterest tool for restaurant, hotel, campground, \
+            museum, and nationalMonument. Summarize the useful findings in plain \
+            English. If a category has no results, say that directly. Do not create \
+            the itinerary.
+            """
         }
+
+        return response.content
     }
 
-    private func pointOfInterestSummary() async -> String {
-        let tool = FindPointsOfInterestTool(landmark: landmark)
-        let categories: [FindPointsOfInterestTool.Category] = [
-            .restaurant,
-            .hotel,
-            .campground,
-            .museum,
-            .nationalMonument
-        ]
-
-        var results: [String] = []
-        for category in categories {
-            let result = (try? await tool.call(arguments: .init(pointOfInterest: category)))
-                ?? "No \(category.rawValue) results were available for \(landmark.name)."
-            results.append(result)
-        }
-
-        return results.joined(separator: "\n")
+    private func setError(_ error: Error) {
+        self.error = error
+        errorMessage = Self.message(for: error)
     }
 
     private static func createResearchSession(landmark: Landmark) -> LanguageModelSession {
