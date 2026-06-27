@@ -1,0 +1,19 @@
+FoundationModelPlay/Models/Itenerary/ItineraryPlanner.swift
+  s_110aee548d052f::t_6040650889b383 120-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.1",
+  "base_commit_sha": "73df7c0af3bcca56c51274688f9b6af35ef2c270",
+  "prompts": {},
+  "sessions": {
+    "s_110aee548d052f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f094e-b23b-7e33-b688-60cbc6bf60e6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Kamaal Farah <kamaal.f1@gmail.com>"
+    }
+  }
+}
