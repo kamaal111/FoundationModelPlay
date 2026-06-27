@@ -11,7 +11,7 @@ import FoundationModels
 
 @Observable
 final class ItineraryPlanner {
-    private(set) var itinerary: Itinerary?
+    private(set) var itinerary: Itinerary.PartiallyGenerated?
     private(set) var error: Error?
     private(set) var errorMessage: String?
 
@@ -35,35 +35,34 @@ final class ItineraryPlanner {
             return
         }
 
-        let response: LanguageModelSession.Response<Itinerary>
+        let stream = itinerarySession.streamResponse(generating: Itinerary.self) {
+            """
+            Generate a complete \(dayCount)-day itinerary to \(landmark.name).
+
+            You must fill every required property:
+            - title
+            - destinationName
+            - description
+            - rationale
+            - exactly \(dayCount) days
+            - exactly 3 activities per day
+
+            Use \(landmark.name) as destinationName.
+            Give it a fun title and description.
+            """
+
+            """
+            Use these point-of-interest search results when they are relevant:
+            \(pointOfInterestSummary)
+            """
+        }
         do {
-            response = try await itinerarySession.respond(generating: Itinerary.self) {
-                """
-                Generate a complete \(dayCount)-day itinerary to \(landmark.name).
-
-                You must fill every required property:
-                - title
-                - destinationName
-                - description
-                - rationale
-                - exactly \(dayCount) days
-                - exactly 3 activities per day
-
-                Use \(landmark.name) as destinationName.
-                Give it a fun title and description.
-                """
-
-                """
-                Use these point-of-interest search results when they are relevant:
-                \(pointOfInterestSummary)
-                """
+            for try await partialItinerary in stream {
+                itinerary = partialItinerary.content
             }
         } catch {
             setError(error)
-            return
         }
-
-        itinerary = response.content
     }
 
     private func researchPointOfInterestSummary() async throws -> String {

@@ -10,27 +10,33 @@ import FoundationModels
 
 struct ItineraryView: View {
     let landmark: Landmark
-    let itinerary: Itinerary
+    let itinerary: Itinerary.PartiallyGenerated
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading) {
-                Text(itinerary.title)
-                    .contentTransition(.opacity)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                Text(itinerary.description)
-                    .contentTransition(.opacity)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                if let title = itinerary.title {
+                    Text(title)
+                        .contentTransition(.opacity)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                }
+                if let description = itinerary.description {
+                    Text(description)
+                        .contentTransition(.opacity)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
-            HStack(alignment: .top) {
-                Image(systemName: "sparkles")
-                Text(itinerary.rationale)
-                    .contentTransition(.opacity)
+            if let rationale = itinerary.rationale {
+                HStack(alignment: .top) {
+                    Image(systemName: "sparkles")
+                    Text(rationale)
+                        .contentTransition(.opacity)
+                }
+                .rationaleStyle()
             }
-            .rationaleStyle()
-            ForEach(itinerary.days, id: \.self) { plan in
+            ForEach(itinerary.days ?? [], id: \.self) { plan in
                 DayView(landmark: landmark, plan: plan)
                     .transition(.blurReplace)
             }
@@ -44,7 +50,7 @@ private struct DayView: View {
     @State private var map = LocationLookup()
 
     let landmark: Landmark
-    let plan: DayPlan
+    let plan: DayPlan.PartiallyGenerated
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -54,8 +60,8 @@ private struct DayView: View {
                     landmarkMapItem: map.item
                 )
                 .onChange(of: plan.destination) {
-                    if !plan.destination.isEmpty {
-                        map.performLookup(location: plan.destination)
+                    if let destination = plan.destination, !destination.isEmpty {
+                        map.performLookup(location: destination)
                     }
                 }
 
@@ -63,13 +69,17 @@ private struct DayView: View {
                     Text(weatherForecast)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text(plan.title)
-                        .contentTransition(.opacity)
-                        .font(.headline)
-                    Text(plan.subtitle)
-                        .contentTransition(.opacity)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    if let title = plan.title {
+                        Text(title)
+                            .contentTransition(.opacity)
+                            .font(.headline)
+                    }
+                    if let subtitle = plan.subtitle {
+                        Text(subtitle)
+                            .contentTransition(.opacity)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -79,7 +89,7 @@ private struct DayView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 200)
             .padding([.horizontal, .top], 4)
-            ActivityList(activities: plan.activities)
+            ActivityList(activities: plan.activities ?? [])
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
         }
@@ -99,20 +109,24 @@ private struct DayView: View {
 }
 
 private struct ActivityList: View {
-    let activities: [Activity]
+    let activities: [Activity].PartiallyGenerated
 
     var body: some View {
         ForEach(activities, id: \.self) { activity in
             HStack(alignment: .top, spacing: 12) {
-                ActivityIcon(symbolName: activity.type.symbolName)
-                VStack(alignment: .leading) {
-                    Text(activity.title)
-                        .contentTransition(.opacity)
-                        .font(.headline)
-                    Text(activity.description)
-                        .contentTransition(.opacity)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                if let title = activity.title {
+                    ActivityIcon(symbolName: activity.type?.symbolName)
+                    VStack(alignment: .leading) {
+                        Text(title)
+                            .contentTransition(.opacity)
+                            .font(.headline)
+                        if let description = activity.description {
+                            Text(description)
+                                .contentTransition(.opacity)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
         }
