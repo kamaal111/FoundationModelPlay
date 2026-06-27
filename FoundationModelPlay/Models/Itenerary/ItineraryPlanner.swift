@@ -26,6 +26,11 @@ final class ItineraryPlanner {
         self.itinerarySession = Self.createItinerarySession(landmark: landmark)
     }
 
+    func prewarm() {
+        researchSession.prewarm()
+        itinerarySession.prewarm()
+    }
+
     func suggestItinerary(dayCount: Int) async {
         let pointOfInterestSummary: String
         do {

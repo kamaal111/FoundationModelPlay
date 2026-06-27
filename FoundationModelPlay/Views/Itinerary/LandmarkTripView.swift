@@ -23,6 +23,7 @@ struct LandmarkTripView: View {
                 }
                 if let itinerary = planner?.itinerary {
                     ItineraryView(landmark: landmark, itinerary: itinerary)
+                        .padding()
                 }
             }
             .headerStyle(landmark: landmark)
@@ -32,6 +33,7 @@ struct LandmarkTripView: View {
             .scrollDisabled(!requestedItinerary)
             .task {
                 planner = ItineraryPlanner(landmark: landmark)
+                planner?.prewarm()
             }
         }
     }
