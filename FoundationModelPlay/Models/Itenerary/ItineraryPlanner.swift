@@ -117,6 +117,13 @@ final class ItineraryPlanner {
     }
 
     private static func message(for error: Error) -> String {
+        if error.localizedDescription.contains("The assets required for the session are unavailable.") {
+            return """
+            This device does not support Apple Intelligence, so itinerary generation is \
+            unavailable here.
+            """
+        }
+
         if error.localizedDescription.contains("maximum allowed context size") {
             return """
             The itinerary prompt was too large for the local model. Try again with a shorter \
